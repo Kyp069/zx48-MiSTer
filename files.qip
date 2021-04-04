@@ -1,0 +1,32 @@
+set_global_assignment -name SDC_FILE zx48.sdc
+set_global_assignment -name SYSTEMVERILOG_FILE zx48.sv
+
+set_global_assignment -name VERILOG_FILE rtl/audio.v
+set_global_assignment -name VERILOG_FILE rtl/cpu.v
+set_global_assignment -name VERILOG_FILE rtl/dprf.v
+set_global_assignment -name VERILOG_FILE rtl/keyboard.v
+set_global_assignment -name VERILOG_FILE rtl/memory.v
+set_global_assignment -name VERILOG_FILE rtl/ram.v
+set_global_assignment -name VERILOG_FILE rtl/rom.v
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/saa1099.sv
+set_global_assignment -name VERILOG_FILE rtl/specdrum.v
+set_global_assignment -name VERILOG_FILE rtl/spi.v
+set_global_assignment -name VERILOG_FILE rtl/turbosound.v
+set_global_assignment -name VERILOG_FILE rtl/usd.v
+set_global_assignment -name VERILOG_FILE rtl/video.v
+set_global_assignment -name VERILOG_FILE rtl/zx48.v
+
+set_global_assignment -name VHDL_FILE rtl/T80/T80.vhd
+set_global_assignment -name VHDL_FILE rtl/T80/T80_ALU.vhd
+set_global_assignment -name VHDL_FILE rtl/T80/T80_MCode.vhd
+set_global_assignment -name VHDL_FILE rtl/T80/T80_Pack.vhd
+set_global_assignment -name VHDL_FILE rtl/T80/T80_Reg.vhd
+set_global_assignment -name VHDL_FILE rtl/T80/T80pa.vhd
+
+set_global_assignment -name VERILOG_FILE rtl/JT49/jt49.v
+set_global_assignment -name VERILOG_FILE rtl/JT49/jt49_bus.v
+set_global_assignment -name VERILOG_FILE rtl/JT49/jt49_cen.v
+set_global_assignment -name VERILOG_FILE rtl/JT49/jt49_div.v
+set_global_assignment -name VERILOG_FILE rtl/JT49/jt49_eg.v
+set_global_assignment -name VERILOG_FILE rtl/JT49/jt49_exp.v
+set_global_assignment -name VERILOG_FILE rtl/JT49/jt49_noise.v
