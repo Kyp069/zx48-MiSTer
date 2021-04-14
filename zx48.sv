@@ -256,6 +256,16 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 
 //-------------------------------------------------------------------------------------------------
 
+ltc2308_tape ltc2308_tape
+(
+	.clk(CLK_50M),
+	.ADC_BUS(ADC_BUS),
+	.dout(tape_adc),
+	.active(tape_adc_act)
+);
+
+//-------------------------------------------------------------------------------------------------
+
 wire sdmiso = vsd_sel ? vsdmiso : SD_MISO;
 
 reg vsd_sel = 0;
@@ -335,7 +345,7 @@ wire[ 1:0] blank;
 wire[ 1:0] sync;
 wire[23:0] rgb;
 
-wire ear;
+wire ear = ~tape_adc;
 wire[9:0] laudio;
 wire[9:0] raudio;
 
