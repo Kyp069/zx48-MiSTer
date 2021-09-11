@@ -5,6 +5,8 @@ module video
 	input  wire       clock,
 	input  wire       ce,
 
+	input  wire       model,
+
 	input  wire[ 2:0] border,
 
 	output wire[ 1:0] blank,
@@ -20,12 +22,20 @@ module video
 );
 //-------------------------------------------------------------------------------------------------
 
+wire[8:0] hcountEnd = model ? 9'd455 : 9'd447;
+wire[8:0] vcountEnd = model ? 9'd310 : 9'd311;
+
+wire[8:0] intBeg = model ? 9'd6  : 9'd2 ;
+wire[8:0] intEnd = model ? 9'd78 : 9'd66;
+
+//-------------------------------------------------------------------------------------------------
+
 reg[8:0] hCount;
-wire hCountReset = hCount >= 447;
+wire hCountReset = hCount >= hcountEnd;
 always @(posedge clock) if(ce) if(hCountReset) hCount <= 1'd0; else hCount <= hCount+1'd1;
 
 reg[8:0] vCount;
-wire vCountReset = vCount >= 311;
+wire vCountReset = vCount >= vcountEnd;
 always @(posedge clock) if(ce) if(hCountReset) if(vCountReset) vCount <= 1'd0; else vCount <= vCount+1'd1;
 
 reg[4:0] fCount;
@@ -75,7 +85,7 @@ assign blank = { vCount >= 248 && vCount <= 255, hCount >= 320 && hCount <= 415 
 assign sync = { vCount >= 248 && vCount <= 251, hCount >= 344 && hCount <= 375 };
 assign rgb = palette[{ i, r, g, b }];
 
-assign bi = !(vCount == 248 && hCount >= 2 && hCount <= 65);
+assign bi = !(vCount == 248 && hCount >= intBeg && hCount < intEnd);
 assign cn = (hCount[3] || hCount[2]) && dataEnable;
 assign rd = hCount[3] && dataEnable;
 

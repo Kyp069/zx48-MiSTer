@@ -4,6 +4,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE zx48.sv
 set_global_assignment -name VERILOG_FILE rtl/audio.v
 set_global_assignment -name VERILOG_FILE rtl/cpu.v
 set_global_assignment -name VERILOG_FILE rtl/dprf.v
+set_global_assignment -name VERILOG_FILE rtl/dprs.v
 set_global_assignment -name VERILOG_FILE rtl/keyboard.v
 set_global_assignment -name VERILOG_FILE rtl/memory.v
 set_global_assignment -name VERILOG_FILE rtl/ram.v

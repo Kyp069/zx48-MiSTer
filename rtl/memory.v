@@ -6,6 +6,9 @@ module memory
 	input  wire       ce,
 
 	input  wire       reset,
+	input  wire       model,
+	input  wire       nomap,
+
 	input  wire       rfsh,
 	input  wire       iorq,
 	input  wire       mreq,
@@ -18,8 +21,93 @@ module memory
 
 	input  wire       vce,
 	output wire[ 7:0] vq,
-	input  wire[12:0] va
+	input  wire[12:0] va,
+	output wire       cn
 );
+//-------------------------------------------------------------------------------------------------
+
+reg vduPage;
+reg romPage;
+reg noPaging;
+reg[2:0] ramPage;
+
+always @(posedge clock) if(ce)
+if(!reset)
+begin
+	noPaging <= 1'b0;
+	romPage <= 1'b0;
+	vduPage <= 1'b0;
+	ramPage <= 3'b000;
+end
+else if(!iorq && !a[15] && !a[1] && !wr && !noPaging && model)
+begin
+	noPaging <= d[5];
+	romPage <= d[4];
+	vduPage <= d[3];
+	ramPage <= d[2:0];
+end
+
+//-------------------------------------------------------------------------------------------------
+
+wire[ 7:0] romQ0;
+wire[13:0] romA0 = a[13:0];
+
+rom #(.KB(16), .FN("48.hex")) Rom48
+(
+	.clock  (clock  ),
+	.ce     (ce     ),
+	.q      (romQ0  ),
+	.a      (romA0  )
+);
+
+//-------------------------------------------------------------------------------------------------
+
+wire[ 7:0] romQ1;
+wire[14:0] romA1 = { romPage, a[13:0] };
+
+rom #(.KB(32), .FN("+2.hex")) Rom128
+(
+	.clock  (clock  ),
+	.ce     (ce     ),
+	.q      (romQ1  ),
+	.a      (romA1  )
+);
+
+//-------------------------------------------------------------------------------------------------
+
+wire[ 7:0] esxQ;
+wire[12:0] esxA = a[12:0];
+
+rom #(.KB(8), .FN("esxdos.hex")) RomEsx
+(
+	.clock  (clock  ),
+	.ce     (ce     ),
+	.q      (esxQ   ),
+	.a      (esxA   )
+);
+
+//-------------------------------------------------------------------------------------------------
+
+wire va01 = a[15:14] == 2'b01;
+wire va11 = a[15:14] == 2'b11 && (ramPage == 3'd5 || ramPage == 3'd7);
+
+wire dprWe2 = !(!mreq && !wr && (va01 || va11) && !a[13]);
+
+wire[13:0] dprA1 = { vduPage, va[12:7], !rfsh && a[15:14] == 2'b01 ? a[6:0] : va[6:0] };
+wire[13:0] dprA2 = { va11 ? ramPage[1] : 1'b0, a[12:0] };
+
+dprs #(.KB(16)) Dpr
+(
+	.clock  (clock  ),
+	.ce1    (vce    ),
+	.q1     (vq     ),
+	.a1     (dprA1  ),
+	.ce2    (ce     ),
+	.we2    (dprWe2 ),
+	.d2     (d      ),
+	.a2     (dprA2  )
+);
+
 //-------------------------------------------------------------------------------------------------
 
 reg forcemap;
@@ -64,53 +152,23 @@ begin
 	if(m1) automap <= m1on;
 end
 
-wire map = forcemap || automap;
+//-------------------------------------------------------------------------------------------------
+
+wire map = forcemap || (automap && !nomap);
 wire[3:0] page = !a[13] && mapram ? 4'd3 : mappage;
 
-//-------------------------------------------------------------------------------------------------
+wire ramWe = !(!mreq && !wr && (a[15] || a[14] || (a[13] && map)));
 
-wire[ 7:0] romQ;
-wire[13:0] romA = a[13:0];
-
-rom #(.KB(16), .FN("48.hex")) Rom
-(
-	.clock  (clock  ),
-	.ce     (ce     ),
-	.q      (romQ   ),
-	.a      (romA   )
-);
-
-//-------------------------------------------------------------------------------------------------
-
-wire[13:0] dprA1 = { 1'b0, va[12:7], !rfsh && mem01 ? a[6:0] : va[6:0] };
-
-wire       dprWe2 = !(!mreq && !wr && mem01);
-wire[ 7:0] dprQ2;
-wire[13:0] dprA2 = a[13:0];
-
-dprf #(.KB(16)) Dpr
-(
-	.clock  (clock  ),
-	.ce1    (vce    ),
-	.q1     (vq     ),
-	.a1     (dprA1  ),
-	.ce2    (ce     ),
-	.we2    (dprWe2 ),
-	.d2     (d      ),
-	.q2     (dprQ2  ),
-	.a2     (dprA2  )
-);
-
-//-------------------------------------------------------------------------------------------------
-
-wire       ramWe = !(!mreq && !wr && mem1x);
 wire[ 7:0] ramQ;
-wire[14:0] ramA = a[14:0];
+wire[17:0] ramA
+	= a[15:14] == 2'b00 && map
+	? { 1'b1, page, a[12:0] }
+	: { 1'b0, a[15:14] == 2'b01 ? 3'd5 : a[15:14] == 2'b10 ? 3'd2 : ramPage , a[13:0] };
 
-ram #(.KB(32)) Ram
+ram #(.KB(256)) Ram
 (
 	.clock  (clock  ),
-	.ce     (ce     ),
+	.ce     (1'b1   ),
 	.we     (ramWe  ),
 	.d      (d      ),
 	.q      (ramQ   ),
@@ -119,43 +177,9 @@ ram #(.KB(32)) Ram
 
 //-------------------------------------------------------------------------------------------------
 
-wire[ 7:0] xroQ;
-wire[12:0] xroA = a[12:0];
+assign q = a[15:13] == 3'b000 && map && !mapram ? esxQ : a[15:14] == 2'b00 && !map ? (model ? romQ1 : romQ0) : ramQ;
 
-rom #(.KB(8), .FN("esxdos.hex")) EsxRom
-(
-	.clock  (clock  ),
-	.ce     (ce     ),
-	.q      (xroQ   ),
-	.a      (xroA   )
-);
-
-//-------------------------------------------------------------------------------------------------
-
-wire       xraWe = !(!mreq && !wr && mem001);
-wire[ 7:0] xraQ;
-wire[16:0] xraA = { page, a[12:0] };
-
-ram #(.KB(128)) EsxRam
-(
-	.clock  (clock  ),
-	.ce     (ce     ),
-	.we     (xraWe  ),
-	.d      (d      ),
-	.q      (xraQ   ),
-	.a      (xraA   )
-);
-
-//-------------------------------------------------------------------------------------------------
-
-wire mem00 = a[15:14] == 2'b00;
-wire mem01 = a[15:14] == 2'b01;
-wire mem1x = a[15];
-
-wire mem000 = mem00 && !a[13] && map;
-wire mem001 = mem00 &&  a[13] && map;
-
-assign q = mem000 ? (mapram ? xraQ : xroQ) : mem001 ? xraQ : mem00 ? romQ : mem01 ? dprQ2 : ramQ;
+assign cn = model ? a[14] && ramPage[0] : a[15:14] == 2'b01;
 
 //-------------------------------------------------------------------------------------------------
 endmodule

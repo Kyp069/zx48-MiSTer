@@ -15,5 +15,9 @@
 <li>F5 - NMI
 </ul>
 
-<p>Change this mister.ini parameter to avoid flickering in HDMI output:<br />
+<p>To avoid flickering in HDMI output change this mister.ini parameter:<br />
 vsync_adjust=1</p>
+<p>If you only want to change this setting for this core add<br />
+[zx48]<br />
+vsync_adjust=1</p>
+at the end of mister.ini</p>

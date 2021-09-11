@@ -156,19 +156,19 @@ module emu
 
 ///////// Default values for ports not used in this core /////////
 
-assign ADC_BUS  = 'Z;
-assign USER_OUT = '1;
-assign {UART_RTS, UART_TXD, UART_DTR} = 0;
-assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
-assign {SDRAM_DQ, SDRAM_A, SDRAM_BA, SDRAM_CLK, SDRAM_CKE, SDRAM_DQML, SDRAM_DQMH, SDRAM_nWE, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nCS} = 'Z;
-assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;  
-
 assign VGA_SL = 0;
 assign VGA_F1 = 0;
 assign VGA_SCALER = 0;
-
 assign LED_POWER = 0;
 assign BUTTONS = 0;
+assign AUDIO_S   = 0;
+assign AUDIO_MIX = 0;
+assign ADC_BUS  = 'Z;
+assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
+assign {UART_RTS, UART_TXD, UART_DTR} = 0;
+assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;
+assign {SDRAM_CLK, SDRAM_CKE, SDRAM_A, SDRAM_BA, SDRAM_DQ, SDRAM_DQML, SDRAM_DQMH, SDRAM_nCS, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nWE} = 'Z;
+assign USER_OUT = '1;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -183,41 +183,25 @@ localparam CONF_STR =
 	"zx48;;",
 	"S,VHD;",
 	"-;",
+	"O1,Model,48K,+2;",
+	"O2,DivMMC automapper,Enabled,Disabled;",
+	"-;",
 	"O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
-//	"O2,TV Mode,NTSC,PAL;",
-//	"O34,Noise,White,Red,Green,Blue;",
-//	"-;",
-//	"P1,Test Page 1;",
-//	"P1-;",
-//	"P1-, -= Options in page 1 =-;",
-//	"P1-;",
-//	"P1O5,Option 1-1,Off,On;",
-//	"d0P1F1,BIN;",
-//	"H0P1O6,Option 1-2,Off,On;",
-//	"-;",
-//	"P2,Test Page 2;",
-//	"P2-;",
-//	"P2-, -= Options in page 2 =-;",
-//	"P2-;",
-//	"P2S0,DSK;",
-//	"P2O67,Option 2,1,2,3,4;",
-//	"-;",
 	"-;",
 	"T0,Reset;",
 	"R0,Reset and close OSD;",
-
 	"V,v1.0 ",`BUILD_DATE
 };
 
-wire  [1:0] buttons;
+wire [ 1:0] buttons;
 wire [31:0] status;
 wire [10:0] ps2_key;
 wire [15:0] joystick_0;
 wire [15:0] joystick_1;
 wire [31:0] sd_lba;
-wire  [8:0] sd_buff_addr;
-wire  [7:0] sd_buff_dout;
-wire  [7:0] sd_buff_din;
+wire [ 8:0] sd_buff_addr;
+wire [ 7:0] sd_buff_dout;
+wire [ 7:0] sd_buff_din;
 wire [63:0] img_size;
 wire forced_scandoubler;
 
@@ -338,8 +322,9 @@ pll pll
 reg ps2k10d, kstrobe;
 always @(posedge clk_sys) begin ps2k10d <= ps2_key[10]; kstrobe <= ps2k10d != ps2_key[10]; end
 
-wire ce_pix;
 wire reset = ~(RESET | status[0] | buttons[1]);
+wire model = status[1];
+wire nomap = status[2];
 
 wire[ 1:0] blank;
 wire[ 1:0] sync;
@@ -353,18 +338,19 @@ wire kpress = ~ps2_key[9];
 wire[7:0] kcode = ps2_key[7:0];
 wire[1:0] kleds;
 
-//wire[2:0] jsel = status[19:17];
 wire[5:0] jstick = joystick_0[5:0]; // | joystick_1[5:0]) : 6'd0;
 
 zx48 ZX48
 (
 	.clock  (clk_sys),
-	.pce    (ce_pix ),
 	.reset  (reset  ),
+	.model  (model  ),
+	.nomap  (nomap  ),
 	.locked (locked ),
 	.blank  (blank  ),
 	.sync   (sync   ),
 	.rgb    (rgb    ),
+	.pce    (ce_pix ),
 	.ear    (ear    ),
 	.laudio (laudio ),
 	.raudio (raudio ),
@@ -394,8 +380,6 @@ assign VGA_B     = rgb[ 7: 0];
 assign LED_USER  = vsd_sel & sd_act;
 assign LED_DISK  = { 1'b1, ~vsd_sel & sd_act };
 
-assign AUDIO_MIX = 0;
-assign AUDIO_S   = 0;
 assign AUDIO_L   = { 2'd0, laudio, 4'd0 };
 assign AUDIO_R   = { 2'd0, raudio, 4'd0 };
 

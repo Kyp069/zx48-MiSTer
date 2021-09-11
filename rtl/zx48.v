@@ -3,14 +3,17 @@ module zx48
 //-------------------------------------------------------------------------------------------------
 (
 	input  wire       clock,  // 56 MHz
-	output wire       pce,    // pixel ce
 
 	input  wire       reset,
 	input  wire       locked,
 
+	input  wire       model,
+	input  wire       nomap,
+
 	output wire[ 1:0] blank,
 	output wire[ 1:0] sync,
 	output wire[23:0] rgb,
+	output wire       pce,    // pixel ce
 
 	input  wire       ear,
 	output wire[ 9:0] laudio,
@@ -44,12 +47,12 @@ assign pce = ce7M0n;
 //-------------------------------------------------------------------------------------------------
 
 reg mreqt23iorqtw3;
-always @(posedge clock) if(cc3M5p) mreqt23iorqtw3 <= mreq & ioFE;
+always @(posedge clock) if(cc3M5p) mreqt23iorqtw3 <= mreq & ioFE & io7FFD;
 
 reg cpuck;
 always @(posedge clock) if(ce7M0n) cpuck <= !(cpuck && contend);
 
-wire contend = !(vduCn && cpuck && mreqt23iorqtw3 && ((!a[15] && a[14]) || !ioFE));
+wire contend = !(vduCn && cpuck && mreqt23iorqtw3 && ((a[15:14] == 2'b01) || ramCn || !ioFE));
 
 wire cc3M5p = ce3M5p & contend;
 wire cc3M5n = ce3M5n & contend;
@@ -104,6 +107,8 @@ memory Memory
 	.clock  (clock  ),
 	.ce     (cc3M5p ),
 	.reset  (rst    ),
+	.model  (model  ),
+	.nomap  (nomap  ),
 	.rfsh   (rfsh   ),
 	.iorq   (iorq   ),
 	.mreq   (mreq   ),
@@ -115,7 +120,8 @@ memory Memory
 	.a      (a      ),
 	.vce    (ce7M0n ),
 	.vq     (vq     ),
-	.va     (va     )
+	.va     (va     ),
+	.cn     (ramCn  )
 );
 
 //-------------------------------------------------------------------------------------------------
@@ -124,6 +130,7 @@ video Video
 (
 	.clock  (clock  ),
 	.ce     (ce7M0n ),
+	.model  (model  ),
 	.border (border ),
 	.blank  (blank  ),
 	.sync   (sync   ),
@@ -275,6 +282,7 @@ wire io1F = !(!iorq && !a[5]);                     // kempston
 wire ioEB = !(!iorq && a[7:0] == 8'hEB);           // usd
 wire ioFF = !(!iorq && a[7:0] == 8'hFF);           // saa
 wire ioFFFD = !(!iorq && a[15] && a[14] && !a[1]); // psg
+wire io7FFD = !(!iorq && !a[15] && !a[1]);         // paging
 
 assign d
 	= !mreq ? memQ
