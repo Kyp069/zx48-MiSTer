@@ -190,7 +190,7 @@ localparam CONF_STR =
 	"-;",
 	"T0,Reset;",
 	"R0,Reset and close OSD;",
-	"V,v1.0 ",`BUILD_DATE
+	"V,v1.2 ",`BUILD_DATE
 };
 
 wire [ 1:0] buttons;
