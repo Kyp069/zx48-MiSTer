@@ -22,7 +22,12 @@ module memory
 	input  wire       vce,
 	output wire[ 7:0] vq,
 	input  wire[12:0] va,
-	output wire       cn
+	output wire       cn,
+
+	input  wire       iniBusy,
+	input  wire       iniWr,
+	input  wire[ 7:0] iniD,
+	input  wire[15:0] iniA
 );
 //-------------------------------------------------------------------------------------------------
 
@@ -49,39 +54,51 @@ end
 
 //-------------------------------------------------------------------------------------------------
 
+wire       romCe0 = iniBusy | ce;
+wire       romWe0 = !(iniBusy && iniWr && iniA[15:14] == 2'b10);
 wire[ 7:0] romQ0;
-wire[13:0] romA0 = a[13:0];
+wire[13:0] romA0 = iniBusy ? iniA[13:0] : a[13:0];
 
-rom #(.KB(16), .FN("48.hex")) Rom48
+ram #(.KB(16), .FN("48.hex")) Rom48
 (
 	.clock  (clock  ),
-	.ce     (ce     ),
+	.ce     (romCe0 ),
+	.we     (romWe0 ),
+	.d      (iniD   ),
 	.q      (romQ0  ),
 	.a      (romA0  )
 );
 
 //-------------------------------------------------------------------------------------------------
 
+wire       romCe1 = iniBusy | ce;
+wire       romWe1 = !(iniBusy && iniWr && !iniA[15]);
 wire[ 7:0] romQ1;
-wire[14:0] romA1 = { romPage, a[13:0] };
+wire[14:0] romA1 = iniBusy ? iniA[14:0] : { romPage, a[13:0] };
 
-rom #(.KB(32), .FN("+2.hex")) Rom128
+ram #(.KB(32), .FN("+2.hex")) Rom128
 (
 	.clock  (clock  ),
-	.ce     (ce     ),
+	.ce     (romCe1 ),
+	.we     (romWe1 ),
+	.d      (iniD   ),
 	.q      (romQ1  ),
 	.a      (romA1  )
 );
 
 //-------------------------------------------------------------------------------------------------
 
+wire       esxCe = iniBusy | ce;
+wire       esxWe = !(iniBusy && iniWr && iniA[15:13] == 3'b110);
 wire[ 7:0] esxQ;
-wire[12:0] esxA = a[12:0];
+wire[12:0] esxA = iniBusy ? iniA[12:0] : a[12:0];
 
-rom #(.KB(8), .FN("esxdos.hex")) RomEsx
+ram #(.KB(8), .FN("esxdos.hex")) RomEsx
 (
 	.clock  (clock  ),
-	.ce     (ce     ),
+	.ce     (esxCe  ),
+	.we     (esxWe  ),
+	.d      (iniD   ),
 	.q      (esxQ   ),
 	.a      (esxA   )
 );

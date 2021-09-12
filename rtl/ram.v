@@ -3,7 +3,8 @@ module ram
 //-------------------------------------------------------------------------------------------------
 #
 (
-	parameter KB = 0
+	parameter KB = 0,
+	parameter FN = ""
 )
 (
 	input  wire                      clock,
@@ -16,6 +17,7 @@ module ram
 //-------------------------------------------------------------------------------------------------
 
 reg[7:0] ram[(KB*1024)-1:0];
+initial if(FN != "") $readmemh(FN, ram, 0);
 
 always @(posedge clock) if(ce) begin q <= ram[a]; if(!we) ram[a] <= d; end
 

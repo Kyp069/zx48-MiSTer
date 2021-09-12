@@ -203,6 +203,8 @@ wire [ 8:0] sd_buff_addr;
 wire [ 7:0] sd_buff_dout;
 wire [ 7:0] sd_buff_din;
 wire [63:0] img_size;
+wire[26:0] ioctl_addr;
+wire[ 7:0] ioctl_dout;
 wire forced_scandoubler;
 
 hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
@@ -233,6 +235,11 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 	.img_mounted(img_mounted),
 	.img_readonly(img_readonly),
 	.img_size(img_size),
+
+	.ioctl_download(ioctl_download),
+	.ioctl_wr      (ioctl_wr      ),
+	.ioctl_addr    (ioctl_addr    ),
+	.ioctl_dout    (ioctl_dout    ),
 
 	.buttons(buttons),
 	.forced_scandoubler(forced_scandoubler)
@@ -322,7 +329,7 @@ pll pll
 reg ps2k10d, kstrobe;
 always @(posedge clk_sys) begin ps2k10d <= ps2_key[10]; kstrobe <= ps2k10d != ps2_key[10]; end
 
-wire reset = ~(RESET | status[0] | buttons[1]);
+wire reset = ~(RESET | status[0] | buttons[1] | ioctl_download);
 wire model = status[1];
 wire nomap = status[2];
 
@@ -339,6 +346,11 @@ wire[7:0] kcode = ps2_key[7:0];
 wire[1:0] kleds;
 
 wire[5:0] jstick = joystick_0[5:0]; // | joystick_1[5:0]) : 6'd0;
+
+wire       iniBusy = ioctl_download;
+wire       iniWr = ioctl_wr;
+wire[ 7:0] iniD = ioctl_dout;
+wire[15:0] iniA = ioctl_addr[15:0];
 
 zx48 ZX48
 (
@@ -362,7 +374,11 @@ zx48 ZX48
 	.usdCk  (sdclk  ),
 	.usdCs  (sdss   ),
 	.usdMiso(sdmiso ),
-	.usdMosi(sdmosi )
+	.usdMosi(sdmosi ),
+	.iniBusy(iniBusy),
+	.iniWr  (iniWr  ),
+	.iniD   (iniD   ),
+	.iniA   (iniA   )
 );
 
 //-------------------------------------------------------------------------------------------------

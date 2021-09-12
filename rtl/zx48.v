@@ -29,7 +29,12 @@ module zx48
 	output wire       usdCs,
 	output wire       usdCk,
 	input  wire       usdMiso,
-	output wire       usdMosi
+	output wire       usdMosi,
+
+	input  wire       iniBusy,
+	input  wire       iniWr,
+	input  wire[ 7:0] iniD,
+	input  wire[15:0] iniA
 );
 //-------------------------------------------------------------------------------------------------
 
@@ -121,7 +126,11 @@ memory Memory
 	.vce    (ce7M0n ),
 	.vq     (vq     ),
 	.va     (va     ),
-	.cn     (ramCn  )
+	.cn     (ramCn  ),
+	.iniBusy(iniBusy),
+	.iniWr  (iniWr  ),
+	.iniD   (iniD   ),
+	.iniA   (iniA   )
 );
 
 //-------------------------------------------------------------------------------------------------

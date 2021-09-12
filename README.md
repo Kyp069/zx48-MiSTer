@@ -15,6 +15,9 @@
 <li>F5 - NMI
 </ul>
 
+<p>Optionally copy boot.rom to games/zx48 to override default ROMs. File is a concatenation of
+(128K ROM, 32K bytes)+(48K ROM, 16K bytes)+(esxDOS ROM, 8K byts)</p>
+
 <p>To avoid flickering in HDMI output change this mister.ini parameter:<br />
 vsync_adjust=1</p>
 <p>If you only want to change this setting for this core add<br />

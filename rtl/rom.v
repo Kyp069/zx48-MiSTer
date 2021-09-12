@@ -15,7 +15,7 @@ module rom
 //-------------------------------------------------------------------------------------------------
 
 reg[7:0] rom[(KB*1024)-1:0];
-initial $readmemh(FN, rom, 0);
+initial if(FN != "") $readmemh(FN, rom, 0);
 
 always @(posedge clock) if(ce) q <= rom[a];
 
